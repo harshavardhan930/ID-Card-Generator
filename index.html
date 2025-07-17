@@ -35,7 +35,7 @@
       display: flex;
       flex-direction: column;
       gap: 12px;
-      width: 320px;
+      width:var(--card-w);
       box-sizing: border-box;
     }
 
@@ -106,11 +106,33 @@
       aspect-ratio:690/1050; /* maintain card ratio responsively */
       position:relative;
     }
+    /*
     #generatedPreview{
       position:absolute;top:0;left:0;width:100%;height:100%;object-fit:contain;
       border:4px solid #0077ff;border-radius:12px;box-shadow:0 8px 20px rgba(0,0,0,0.2);
       background:#eee;
-    }
+    }*/
+
+    #generatedPreview {
+  position: absolute;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  object-fit: contain;
+  border: 4px solid #0077ff;
+  border-radius: 12px;
+  box-shadow: 0 8px 20px rgba(0, 0, 0, 0.2);
+
+  /* ✅ Replace this line:
+  background: #eee;
+  */
+
+  /* ✅ Add this instead: */
+  background: url('Background.png') center center no-repeat;
+  background-size: cover;
+}
+
 
     /* Small helper text */
     .helper-note{font-size:12px;color:#666;margin-top:-4px;}
@@ -156,8 +178,8 @@
     <input type="file" id="photoInput" accept="image/*" />
     <div id="crop-area"><img id="cropImage" alt="Crop source" /></div>
     <div class="helper-note">Select a photo, crop, then generate.</div>
-    <button type="button" onclick="cropAndStorePhoto()">Crop & Insert Photo</button>
-    <button type="button" onclick="generateID()">Generate ID Card</button>
+    <button type="button" onclick="cropAndStorePhoto()">Preview ID Card</button>
+    <button type="button" id="generateBtn" onclick="generateID()" style="display:none;">Uplode ID Card</button>
     <a id="downloadLink" download="idcard.png">Download ID Card</a>
     <div id="loading" style="display:none; text-align:center;">
     <img src="https://i.postimg.cc/XNtP5hP3/mg-logo.gif" alt="Loading..." width="500" />
@@ -174,7 +196,7 @@
 
   <!-- Responsive display of the generated (final) card -->
   <div class="generated-wrapper">
-    <img id="generatedPreview" alt="Generated ID Card Preview" />
+    <img id="generatedPreview" alt="Your Preview is Here" />
   </div>
 
   <!-- Offscreen canvas used for rendering the TRUE card at native resolution -->
@@ -269,6 +291,7 @@
       // create reusable <img> for drawing to final canvas later
       croppedPhotoImg = new Image();
       croppedPhotoImg.src = dataURL;
+      document.getElementById('generateBtn').style.display = 'block';
       croppedPhotoImg.onload = ()=>{
         // optional immediate regenerate preview after crop
         generateID(true); // silent = true so we don't block if fields empty
@@ -352,40 +375,49 @@ drawTextFit(ctx, inpName.value,  coords.name.x,  coords.name.y,  coords.name.siz
     /**********************************************************************
      * Upload final card & raw photo to Google Apps Script
      **********************************************************************/
-    function uploadToDrive(dataURL, safeAdmn){
-      // dataURL format: data:image/png;base64,XXXXX
-      const base64Image = dataURL.split(',')[1];
+function uploadToDrive(dataURL, safeAdmn) {
+  document.getElementById('fullscreenLoader').style.display = 'flex';
 
-      // Raw cropped photo (already sized) also send
-      const rawPhotoData = croppedPhotoImg.src.split(',')[1];
+  const base64Image = dataURL.split(',')[1];
+  const rawPhotoData = croppedPhotoImg.src.split(',')[1];
 
-      const scriptURL = 'https://script.google.com/macros/s/AKfycbykr5tjous0QZggMnM9WoFQKCFYkve1kUsvsLPCCEuvfoftzD0yj1FM3pny3NibrRX7/exec';
+  const scriptURL = 'https://script.google.com/macros/s/AKfycbynSDk3D4sNMqlfO-hmnkyPfJfs5hMMKJexhsQWvUFRR-kL99fUQTqt0MOZLK-jTkom/exec'; // Replace with your deployed Web App URL
 
-      const formData = new FormData();
-      formData.append('image', base64Image);
-      formData.append('filename', `Student_ID_${safeAdmn}.png`);
-      formData.append('photo', rawPhotoData);
-      formData.append('photoName', `Passport_Photo_${safeAdmn}.png`);
-      formData.append('admn',   inpAdmn.value);
-      formData.append('name',   inpName.value);
-      formData.append('pen',    inpPEN.value);
-      formData.append('child',  inpChild.value);
-      formData.append('father', inpFather.value);
-      formData.append('cell',   inpCell.value);
+  const formData = new FormData();
+  formData.append('image', base64Image);
+  formData.append('filename', `Student_ID_${safeAdmn}.png`);
 
-      fetch(scriptURL, {method:'POST', body:formData})
-  .then(r => r.text())
-  .then(txt => {
-    document.getElementById('fullscreenLoader').style.display = 'none'; // hide loading
-    alert('Upload complete!\n' + txt);
-    location.reload(); // 🔄 reload page after upload success
-  })
-  .catch(err => {
-    document.getElementById('fullscreenLoader').style.display = 'none'; // hide loading
-    console.error('Upload error:', err);
-    alert('Upload failed.');
-  });
+  formData.append('photo', rawPhotoData);
+  formData.append('photoName', `Passport_Photo_${safeAdmn}.png`);
+
+  formData.append('admn', inpAdmn.value.trim());
+  formData.append('name', inpName.value.trim());
+  formData.append('pen', inpPEN.value.trim());
+  formData.append('child', inpChild.value.trim());
+  formData.append('father', inpFather.value.trim());
+  formData.append('cell', inpCell.value.trim());
+
+  fetch(scriptURL, { method: 'POST', body: formData })
+    .then(r => r.text())
+    .then(txt => {
+      document.getElementById('fullscreenLoader').style.display = 'none';
+
+      if (txt === "exists") {
+        alert('⚠️ This admission number already exists.\nUpload skipped.');
+        return;
+      }
+
+      alert('✅ Upload complete!\n' + txt);
+      location.reload();
+    })
+    .catch(err => {
+      document.getElementById('fullscreenLoader').style.display = 'none';
+      console.error('Upload error:', err);
+      alert('❌ Upload failed. Please try again.');
+    });
 }
+
+
   </script>
 </body>
 </html>
