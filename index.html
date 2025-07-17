@@ -1,15 +1,19 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-  <meta charset="UTF-8" />
-  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>ID Card Generator</title>
-  <link
-    rel="stylesheet"
-    href="https://cdnjs.cloudflare.com/ajax/libs/cropperjs/1.5.13/cropper.min.css"
-  />
+  <meta charset="utf-8" />
+  <title>Fixed-Layout ID Card Generator</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+
+  <!-- CropperJS (for photo crop) -->
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/cropperjs/1.5.13/cropper.min.css" />
   <style>
-    /* Base styling */
+    :root {
+      --card-w: 690px; /* native template size */
+      --card-h: 1050px;
+    }
+
+    /* Page layout ------------------------------------------------------- */
     body {
       font-family: 'Segoe UI', sans-serif;
       display: flex;
@@ -27,7 +31,7 @@
       background: #fff;
       padding: 25px;
       border-radius: 12px;
-      box-shadow: 0 8px 16px rgba(0, 0, 0, 0.1);
+      box-shadow: 0 8px 16px rgba(0,0,0,0.1);
       display: flex;
       flex-direction: column;
       gap: 12px;
@@ -35,252 +39,112 @@
       box-sizing: border-box;
     }
 
-    .form-container h2 {
-      margin-bottom: 10px;
-      color: #2c3e50;
-      font-size: 22px;
-      border-bottom: 2px solid #ddd;
-      padding-bottom: 5px;
+    .form-container h2{
+      margin-bottom:10px;
+      color:#2c3e50;
+      font-size:22px;
+      border-bottom:2px solid #ddd;
+      padding-bottom:5px;
     }
 
-    input[type='text'],
-    input[type='file'] {
-      padding: 10px;
-      font-size: 15px;
-      border: 1px solid #ccc;
-      border-radius: 8px;
-      outline: none;
-      transition: 0.3s;
-      width: 100%;
-      box-sizing: border-box;
+    input[type="text"],
+    input[type="file"]{
+      padding:10px;
+      font-size:15px;
+      border:1px solid #ccc;
+      border-radius:8px;
+      outline:none;
+      transition:0.3s;
+      width:100%;
+      box-sizing:border-box;
+    }
+    input[type="text"]:focus{border-color:#4a90e2;box-shadow:0 0 3px #4a90e2;}
+
+    button{
+      padding:10px;
+      font-size:16px;
+      background:#4a90e2;
+      color:#fff;
+      border:none;
+      border-radius:8px;
+      cursor:pointer;
+      transition:background 0.3s;
+      width:100%;
+      box-sizing:border-box;
+    }
+    button:hover{background:#357abd;}
+
+    #downloadLink{
+      text-decoration:none;
+      padding:10px;
+      text-align:center;
+      background:#2ecc71;
+      color:#fff;
+      border-radius:8px;
+      display:none; /* shown after generate */
+      margin-top:5px;
+      width:100%;
+      box-sizing:border-box;
     }
 
-    input[type='text']:focus {
-      border-color: #4a90e2;
-      box-shadow: 0 0 3px #4a90e2;
+    /* Crop area --------------------------------------------------------- */
+    #crop-area{
+      width:100%;
+      height:auto;
+      border:2px dashed #aaa;
+      padding:5px;
+      border-radius:10px;
+      background-color:#f9f9f9;
+      text-align:center;
+    }
+    #cropImage{max-width:100%;display:none;margin-top:10px;border-radius:5px;max-height:300px;object-fit:contain;}
+
+    /* Generated preview image ------------------------------------------ */
+    .generated-wrapper{
+      width:90vw;
+      max-width:var(--card-w);
+      aspect-ratio:690/1050; /* maintain card ratio responsively */
+      position:relative;
+    }
+    #generatedPreview{
+      position:absolute;top:0;left:0;width:100%;height:100%;object-fit:contain;
+      border:4px solid #0077ff;border-radius:12px;box-shadow:0 8px 20px rgba(0,0,0,0.2);
+      background:#eee;
     }
 
-    #crop-area {
-      width: 100%;
-      border: 2px dashed #aaa;
-      padding: 5px;
-      border-radius: 10px;
-      background-color: #f9f9f9;
-      text-align: center;
-    }
-
-    #cropImage {
-      max-width: 100%;
-      display: none;
-      margin-top: 10px;
-      border-radius: 5px;
-      max-height: 300px;
-      object-fit: contain;
-    }
-
-    button {
-      padding: 10px;
-      font-size: 16px;
-      background: #4a90e2;
-      color: #fff;
-      border: none;
-      border-radius: 8px;
-      cursor: pointer;
-      transition: background 0.3s;
-      width: 100%;
-      box-sizing: border-box;
-    }
-
-    button:hover {
-      background: #357abd;
-    }
-
-    #downloadLink {
-      text-decoration: none;
-      padding: 10px;
-      text-align: center;
-      background: #2ecc71;
-      color: white;
-      border-radius: 8px;
-      display: inline-block;
-      margin-top: 5px;
-      width: 100%;
-      box-sizing: border-box;
-    }
-
-    #idCardPreview {
-      position: relative;
-      width: 645px;
-      height: 991px;
-      background-image: url('idcard-template.png');
-      background-size: cover;
-      border: 4px solid #333;
-      border-radius: 12px;
-      box-shadow: 0 8px 20px rgba(0, 0, 0, 0.2);
-      overflow: hidden;
-    }
-
-    #watermarkLogo {
-      position: absolute;
-      top: 50%;
-      left: 50%;
-      width: 600px;
-      height: auto;
-      opacity: 0.1;
-      transform: translate(-50%, -50%);
-      pointer-events: none;
-      z-index: 0;
-    }
-
-    #finalPhoto {
-      position: absolute;
-      top: 280px;
-      left: 180px;
-      width: 275px;
-      height: 340px;
-      object-fit: cover;
-      border: 2px solid #000;
-      border-radius: 8px;
-      z-index: 1;
-    }
-
-    .field {
-      position: absolute;
-      font-weight: bold;
-      white-space: nowrap;
-      text-shadow: 0 0 3px rgba(0,0,0,0.5);
-      z-index: 1;
-    }
-
-    #admn { top: 227px; left: 175px; font-size: 30px; color: rgb(107, 11, 67); }
-    #pen   { top: 673px; left: 285px; font-size: 28px; color: #000; }
-    #child { top: 712px; left: 285px; font-size: 28px; color: #000; }
-    #father{ top: 897px; left: 325px; font-size: 28px; color: #fff; }
-    #cell  { top: 932px; left: 325px; font-size: 28px; color: #fff; }
-    #name  { top: 627px; left: 50%; transform: translateX(-50%); font-size: 30px; color: red; width: 600px; text-align: center; }
-
-    canvas { display: none; }
-
-    /* Tablet & small desktop */
-    @media (max-width: 1100px) {
-      #idCardPreview { width: 480px; height: 739px; }
-
-      #finalPhoto { top: 210px; left: 135px; width: 205px; height: 255px; }
-
-      #admn { top: 175px; left: 130px; font-size: 22px; }
-      #pen { top: 500px; left: 215px; font-size: 20px; }
-      #child { top: 530px; left: 215px; font-size: 20px; }
-      #father { top: 700px; left: 245px; font-size: 20px; }
-      #cell { top: 730px; left: 245px; font-size: 20px; }
-      #name { top: 480px; width: 440px; font-size: 22px; }
-    }
-
-    /* Mobile */
-    @media (max-width: 700px) {
-      body { flex-direction: column; align-items: center; }
-
-      .form-container { width: 90vw; max-width: 400px; }
-
-      #idCardPreview {
-        width: 90vw;
-        height: calc(90vw * 991 / 645);
-        margin-top: 20px;
-      }
-
-      #finalPhoto {
-        top: calc(90vw * 280 / 645);
-        left: calc(90vw * 180 / 645);
-        width: calc(90vw * 275 / 645);
-        height: calc(90vw * 340 / 645);
-      }
-
-      #watermarkLogo {
-        width: 80vw;
-      }
-
-      #admn {
-        top: calc(90vw * 233 / 645);
-        left: calc(90vw * 175 / 645);
-        font-size: clamp(14px, 3vw, 20px);
-      }
-
-      #pen {
-        top: calc(90vw * 677 / 645);
-        left: calc(90vw * 285 / 645);
-        font-size: clamp(14px, 3vw, 20px);
-      }
-
-      #child {
-        top: calc(90vw * 720 / 645);
-        left: calc(90vw * 285 / 645);
-        font-size: clamp(14px, 3vw, 20px);
-      }
-
-       #father {
-    top: calc(90vw * 900 / 645);
-    left: calc(90vw * 325 / 645);
-    font-size: clamp(14px, 3vw, 20px);
-  }
-
-      #cell {
-        top: calc(90vw * 937 / 645);
-        left: calc(90vw * 325 / 645);
-        font-size: clamp(14px, 3vw, 20px);
-      }
-
-      #name {
-        top: calc(90vw * 640 / 645);
-        left: 50%;
-        transform: translateX(-50%);
-        width: 90vw;
-        font-size: clamp(16px, 4vw, 28px);
-        text-align: center;
-      }
-    }
-
-#loadingOverlay {
+    /* Small helper text */
+    .helper-note{font-size:12px;color:#666;margin-top:-4px;}
+     
+    #fullscreenLoader {
   position: fixed;
   top: 0;
   left: 0;
-  width: 100vw;
-  height: 100vh;
-  background-color: rgba(255, 255, 255, 0.8);
-  display: none;
+  width: 100%;
+  height: 100%;
+  background: rgba(0,0,0,0.6); /* dull overlay */
+  display: none; /* show only when needed */
+  z-index: 9999;
   justify-content: center;
   align-items: center;
-  flex-direction: column;
-  z-index: 9999;
 }
 
-.spinner {
-  border: 6px solid #ccc;
-  border-top: 6px solid #4a90e2;
-  border-radius: 50%;
-  width: 60px;
-  height: 60px;
-  animation: spin 1s linear infinite;
+#fullscreenLoader .loader-content {
+  text-align: center;
+  color: white;
+}
+
+#fullscreenLoader img {
+  width: 100px;
+  height: auto;
   margin-bottom: 10px;
 }
 
-@keyframes spin {
-  0% { transform: rotate(0deg); }
-  100% { transform: rotate(360deg); }
-}
 
-#loadingOverlay p {
-  font-size: 18px;
-  color: #333;
-}
 
 
   </style>
 </head>
 <body>
-
-      <div id="loadingOverlay">
-  <div class="spinner"></div>
-  <p>Uploading... Please wait</p>
-</div>
   <div class="form-container">
     <h2>Student Details</h2>
     <input type="text" placeholder="Admission No" id="inputAdmn" />
@@ -290,142 +154,238 @@
     <input type="text" placeholder="Cell No" id="inputCell" />
     <input type="text" placeholder="Student Name" id="inputName" />
     <input type="file" id="photoInput" accept="image/*" />
-    <div id="crop-area">
-      <img id="cropImage" />
-    </div>
-    <button onclick="cropAndInsert()">Crop &amp; Insert Photo</button>
-    <button onclick="generateID()">Generate ID Card</button>
-    <a id="downloadLink" style="display:none;" download="idcard.png">Download ID Card</a>
+    <div id="crop-area"><img id="cropImage" alt="Crop source" /></div>
+    <div class="helper-note">Select a photo, crop, then generate.</div>
+    <button type="button" onclick="cropAndStorePhoto()">Crop & Insert Photo</button>
+    <button type="button" onclick="generateID()">Generate ID Card</button>
+    <a id="downloadLink" download="idcard.png">Download ID Card</a>
+    <div id="loading" style="display:none; text-align:center;">
+    <img src="https://i.postimg.cc/XNtP5hP3/mg-logo.gif" alt="Loading..." width="500" />
+  <p style="font-size:14px; color:#555;">Uploading, please wait...</p>
+</div>
+
+  </div>
+  <div id="fullscreenLoader">
+  <div class="loader-content">
+    <img src="loading animation.gif" alt="Loading..." />
+    <p>Uploading, please wait...</p>
+  </div>
+</div>
+
+  <!-- Responsive display of the generated (final) card -->
+  <div class="generated-wrapper">
+    <img id="generatedPreview" alt="Generated ID Card Preview" />
   </div>
 
-  <div id="idCardPreview">
-    <img id="watermarkLogo" src="your-logo.png" alt="Watermark Logo" />
-    <img id="finalPhoto" src="" alt="Cropped Photo" />
-    <div class="field" id="admn">xxxx</div>
-    <div class="field" id="pen">xxxxxxxxxx</div>
-    <div class="field" id="child">xxxxxxxxxx</div>
-    <div class="field" id="father">xxxx</div>
-    <div class="field" id="cell">xxxx</div>
-    <div class="field" id="name">xxxx</div>
-  </div>
-
-  <canvas id="finalCanvas"></canvas>
+  <!-- Offscreen canvas used for rendering the TRUE card at native resolution -->
+  <canvas id="finalCanvas" width="690" height="1050" style="display:none;"></canvas>
 
   <script src="https://cdnjs.cloudflare.com/ajax/libs/cropperjs/1.5.13/cropper.min.js"></script>
-  <script src="https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js"></script>
   <script>
-    // Element refs
-    const admn = document.getElementById("inputAdmn");
-    const pen = document.getElementById("inputPEN");
-    const child = document.getElementById("inputChild");
-    const father = document.getElementById("inputFather");
-    const cell = document.getElementById("inputCell");
-    const name = document.getElementById("inputName");
+    /**********************************************************************
+     * CONFIGURATION: Card size & drawing coordinates (pixels)
+     * Update these values to reposition content on the template.
+     **********************************************************************/
+    const CARD_W = 690;   // template native width
+    const CARD_H = 1050;   // template native height
 
-    admn.addEventListener("input", () => (document.getElementById("admn").innerText = admn.value));
-    pen.addEventListener("input", () => (document.getElementById("pen").innerText = pen.value));
-    child.addEventListener("input", () => (document.getElementById("child").innerText = child.value));
-    father.addEventListener("input", () => (document.getElementById("father").innerText = father.value));
-    cell.addEventListener("input", () => (document.getElementById("cell").innerText = cell.value));
-    name.addEventListener("input", () => (document.getElementById("name").innerText = name.value));
+   const coords = {
+  photo:  {x:203, y:310, w:271, h:341},
+  admn:   {x:195, y:265, color:'rgb(107,11,67)', size:40, align:'left', weight: 'bold'},
+  pen:    {x:315, y:713, color:'#000', size:28, align:'left', weight: '600'},
+  child:  {x:315, y:753, color:'#000', size:28, align:'left', weight: 'bold'},
+  father: {x:360, y:935, color:'#fff', size:28, align:'left', weight: '700'},
+  cell:   {x:360, y:975, color:'#fff', size:28, align:'left', weight: 'bold'},
+  name:   {x:CARD_W/2, y:672, color:'red', size:30, align:'center', maxWidth:600, weight: 'bold'}
+};
 
-    const cropImage = document.getElementById("cropImage");
-    const photoInput = document.getElementById("photoInput");
-    const finalPhoto = document.getElementById("finalPhoto");
-    let cropper;
 
-    photoInput.addEventListener("change", function () {
-      const file = this.files[0];
-      if (file) {
-        const url = URL.createObjectURL(file);
-        cropImage.src = url;
-        cropImage.style.display = "block";
-        cropImage.onload = () => {
-          if (cropper) cropper.destroy();
-          cropper = new Cropper(cropImage, {
-            aspectRatio: 13 / 16,
-            viewMode: 1,
-            autoCropArea: 1,
-          });
-        };
-      }
-    });
 
-    function cropAndInsert() {
-      if (cropper) {
-        const canvas = cropper.getCroppedCanvas({ width: 275, height: 340 });
-        finalPhoto.src = canvas.toDataURL("image/png");
-      }
-    }
+    /**********************************************************************
+     * DOM refs
+     **********************************************************************/
+    const inpAdmn   = document.getElementById('inputAdmn');
+    const inpPEN    = document.getElementById('inputPEN');
+    const inpChild  = document.getElementById('inputChild');
+    const inpFather = document.getElementById('inputFather');
+    const inpCell   = document.getElementById('inputCell');
+    const inpName   = document.getElementById('inputName');
 
-    function generateID() {
-      if (
-        admn.value.trim() === "" ||
-        pen.value.trim() === "" ||
-        child.value.trim() === "" ||
-        father.value.trim() === "" ||
-        cell.value.trim() === "" ||
-        name.value.trim() === "" ||
-        finalPhoto.src === ""
-      ) {
-        alert("⚠️ Please fill in all fields and upload a photo before generating the ID card.");
-        return;
-      }
+    const photoInput    = document.getElementById('photoInput');
+    const cropImage     = document.getElementById('cropImage');
+    const generatedPreview = document.getElementById('generatedPreview');
+    const downloadLink  = document.getElementById('downloadLink');
 
-      html2canvas(document.querySelector("#idCardPreview")).then((canvas) => {
-        canvas.toBlob((blob) => {
-          const reader = new FileReader();
-          reader.readAsDataURL(blob);
-          reader.onloadend = function () {
-            const base64data = reader.result.split(",")[1];
-            const safeAdmn = admn.value.replace(/[^a-zA-Z0-9_-]/g, "_");
-            uploadToDrive(base64data, safeAdmn);
-          };
-        }, "image/png");
+    const finalCanvas = document.getElementById('finalCanvas');
+    const ctx = finalCanvas.getContext('2d');
+
+    let cropper = null;
+    let croppedPhotoImg = null;  // Image element built from cropped data
+    let templateImg = null;      // Background template image
+
+    /**********************************************************************
+     * Load template background once
+     **********************************************************************/
+    function loadTemplate(){
+      return new Promise((resolve, reject)=>{
+        const img = new Image();
+        img.onload = ()=>resolve(img);
+        img.onerror = reject;
+        img.src = 'idcard-template.png'; // make sure file is in same folder
       });
     }
 
-    function uploadToDrive(base64Image, filename) {
-  const scriptURL = "https://script.google.com/macros/s/AKfycbykr5tjous0QZggMnM9WoFQKCFYkve1kUsvsLPCCEuvfoftzD0yj1FM3pny3NibrRX7/exec";
-  const formData = new FormData();
-  formData.append("image", base64Image);
-  formData.append("filename", "Student_ID_" + filename + ".png");
-
-  const rawPhotoData = finalPhoto.src.split(",")[1];
-  formData.append("photo", rawPhotoData);
-  formData.append("photoName", "Passport_Photo_" + filename + ".png");
-
-  formData.append("admn", admn.value);
-  formData.append("name", name.value);
-  formData.append("pen", pen.value);
-  formData.append("child", child.value);
-  formData.append("father", father.value);
-  formData.append("cell", cell.value);
-
-  // Show loading
-  document.getElementById("loadingOverlay").style.display = "flex";
-
-  fetch(scriptURL, {
-    method: "POST",
-    body: formData,
-  })
-    .then((response) => response.text())
-    .then((data) => {
-      alert("✅ Upload complete!\n" + data);
-    })
-    .catch((error) => {
-      console.error("❌ Upload error:", error);
-      alert("❌ Upload failed.");
-    })
-    .finally(() => {
-      // Hide loading after upload completes or fails
-      document.getElementById("loadingOverlay").style.display = "none";
+    loadTemplate().then(img=>{templateImg = img;}).catch(err=>{
+      alert('Template image failed to load. Check path.');
+      console.error(err);
     });
+
+    /**********************************************************************
+     * Photo selection & cropping
+     **********************************************************************/
+    photoInput.addEventListener('change', function(){
+      const file = this.files[0];
+      if(!file) return;
+      const url = URL.createObjectURL(file);
+      cropImage.src = url;
+      cropImage.style.display = 'block';
+      cropImage.onload = ()=>{
+        if(cropper) cropper.destroy();
+        cropper = new Cropper(cropImage, {
+          aspectRatio: 13/16,
+          viewMode: 1,
+          autoCropArea: 1,
+        });
+      };
+    });
+
+    function cropAndStorePhoto(){
+      if(!cropper){
+        alert('Please choose and crop a photo first.');
+        return;
+      }
+      const canvas = cropper.getCroppedCanvas({width:coords.photo.w, height:coords.photo.h});
+      const dataURL = canvas.toDataURL('image/png');
+      // create reusable <img> for drawing to final canvas later
+      croppedPhotoImg = new Image();
+      croppedPhotoImg.src = dataURL;
+      croppedPhotoImg.onload = ()=>{
+        // optional immediate regenerate preview after crop
+        generateID(true); // silent = true so we don't block if fields empty
+      };
+    }
+
+    /**********************************************************************
+     * Text drawing helpers
+     **********************************************************************/
+function drawTextFit(ctx, text, x, y, pxSize, color, align='left', maxWidth=null, weight='normal'){
+  ctx.textBaseline = 'top';
+  ctx.fillStyle = color;
+  ctx.textAlign = align;
+  let size = pxSize;
+  ctx.font = `${weight} ${size}px 'Arial', sans-serif`;
+  if(maxWidth){
+    while(size > 8 && ctx.measureText(text).width > maxWidth){
+      size -= 1;
+      ctx.font = `${weight} ${size}px 'Arial', sans-serif`;
+    }
+  }
+  ctx.fillText(text, x, y);
 }
 
+
+    /**********************************************************************
+     * Generate final card image (true pixel-perfect)
+     * silent=true skips required-field alerts (for auto-preview after crop)
+     **********************************************************************/
+    function generateID(silent=false){
+      if(!templateImg){
+        alert('Template not loaded yet. Please wait a moment and try again.');
+        return;
+      }
+      const required = [inpAdmn,inpPEN,inpChild,inpFather,inpCell,inpName];
+      const missing = required.filter(i=>i.value.trim()==="");
+      if(!silent && missing.length){
+        alert('Please fill in all the fields before generating.');
+        return;
+      }
+      if(!croppedPhotoImg){
+        if(!silent) alert('Please crop a photo first.');
+        return;
+      }
+
+      // Clear canvas
+      ctx.clearRect(0,0,CARD_W,CARD_H);
+
+      // Draw background template
+      ctx.drawImage(templateImg, 0,0, CARD_W, CARD_H);
+
+      // Draw cropped photo
+      const p = coords.photo;
+      ctx.drawImage(croppedPhotoImg, p.x, p.y, p.w, p.h);
+      ctx.lineWidth = 2; ctx.strokeStyle = '#000'; ctx.strokeRect(p.x, p.y, p.w, p.h);
+
+      // Draw text fields
+      drawTextFit(ctx, inpAdmn.value,  coords.admn.x,  coords.admn.y,  coords.admn.size,  coords.admn.color,  coords.admn.align, null, coords.admn.weight);
+drawTextFit(ctx, inpPEN.value,   coords.pen.x,   coords.pen.y,   coords.pen.size,   coords.pen.color,   coords.pen.align, null, coords.pen.weight);
+drawTextFit(ctx, inpChild.value, coords.child.x, coords.child.y, coords.child.size, coords.child.color, coords.child.align, null, coords.child.weight);
+drawTextFit(ctx, inpFather.value,coords.father.x,coords.father.y,coords.father.size,coords.father.color,coords.father.align, null, coords.father.weight);
+drawTextFit(ctx, inpCell.value,  coords.cell.x,  coords.cell.y,  coords.cell.size,  coords.cell.color,  coords.cell.align, null, coords.cell.weight);
+drawTextFit(ctx, inpName.value,  coords.name.x,  coords.name.y,  coords.name.size,  coords.name.color,  coords.name.align, coords.name.maxWidth, coords.name.weight);
+
+      // Update preview <img>
+      const dataURL = finalCanvas.toDataURL('image/png');
+      generatedPreview.src = dataURL;
+
+      // Prep download link
+      const safeAdmn = (inpAdmn.value || 'student').replace(/[^a-zA-Z0-9_-]/g,'_');
+      
+
+      if(!silent){
+  document.getElementById('fullscreenLoader').style.display = 'flex';
+  uploadToDrive(dataURL, safeAdmn);
+}
+
+    }
+    
+
+    /**********************************************************************
+     * Upload final card & raw photo to Google Apps Script
+     **********************************************************************/
+    function uploadToDrive(dataURL, safeAdmn){
+      // dataURL format: data:image/png;base64,XXXXX
+      const base64Image = dataURL.split(',')[1];
+
+      // Raw cropped photo (already sized) also send
+      const rawPhotoData = croppedPhotoImg.src.split(',')[1];
+
+      const scriptURL = 'https://script.google.com/macros/s/AKfycbykr5tjous0QZggMnM9WoFQKCFYkve1kUsvsLPCCEuvfoftzD0yj1FM3pny3NibrRX7/exec';
+
+      const formData = new FormData();
+      formData.append('image', base64Image);
+      formData.append('filename', `Student_ID_${safeAdmn}.png`);
+      formData.append('photo', rawPhotoData);
+      formData.append('photoName', `Passport_Photo_${safeAdmn}.png`);
+      formData.append('admn',   inpAdmn.value);
+      formData.append('name',   inpName.value);
+      formData.append('pen',    inpPEN.value);
+      formData.append('child',  inpChild.value);
+      formData.append('father', inpFather.value);
+      formData.append('cell',   inpCell.value);
+
+      fetch(scriptURL, {method:'POST', body:formData})
+  .then(r => r.text())
+  .then(txt => {
+    document.getElementById('fullscreenLoader').style.display = 'none'; // hide loading
+    alert('Upload complete!\n' + txt);
+    location.reload(); // 🔄 reload page after upload success
+  })
+  .catch(err => {
+    document.getElementById('fullscreenLoader').style.display = 'none'; // hide loading
+    console.error('Upload error:', err);
+    alert('Upload failed.');
+  });
+}
   </script>
-
-
-
 </body>
 </html>
