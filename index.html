@@ -9,143 +9,148 @@
   <!-- CropperJS (for photo crop) -->
   <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/cropperjs/1.5.13/cropper.min.css" />
   <style>
-    :root {
-      --card-w: 690px; /* native template size */
-      --card-h: 1050px;
-    }
+:root {
+  --card-w: 690px;
+  --card-h: 1050px;
+}
 
-    /* Page layout ------------------------------------------------------- */
-    body {
-      font-family: 'Segoe UI', sans-serif;
-      display: flex;
-      flex-wrap: wrap;
-      justify-content: center;
-      gap: 30px;
-      padding: 20px;
-      background: linear-gradient(135deg, #f1f4f9, #dff3ff);
-      color: #333;
-      min-height: 100vh;
-      box-sizing: border-box;
-    }
+/* Page layout ------------------------------------------------------- */
+body {
+  font-family: 'Segoe UI', sans-serif;
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: center;
+  gap: 30px;
+  padding: 20px;
+  background: linear-gradient(135deg, #1e293b, #475569); /* Professional cool-tone gradient */
+  color: #f1f5f9;
+  min-height: 100vh;
+  box-sizing: border-box;
+}
 
-    .form-container {
-      background: #fff;
-      padding: 25px;
-      border-radius: 12px;
-      box-shadow: 0 8px 16px rgba(0,0,0,0.1);
-      display: flex;
-      flex-direction: column;
-      gap: 12px;
-      width:var(--card-w);
-      box-sizing: border-box;
-    }
+.form-container {
+  background: #0f172a; /* Deep navy */
+  padding: 25px;
+  border-radius: 12px;
+  box-shadow: 0 8px 16px rgba(0,0,0,0.2);
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+  width: var(--card-w);
+  box-sizing: border-box;
+}
 
-    .form-container h2{
-      margin-bottom:10px;
-      color:#2c3e50;
-      font-size:22px;
-      border-bottom:2px solid #ddd;
-      padding-bottom:5px;
-    }
+.form-container h2 {
+  margin-bottom: 10px;
+  color: #e2e8f0;
+  font-size: 22px;
+  border-bottom: 2px solid #3b82f6;
+  padding-bottom: 5px;
+}
 
-    input[type="text"],
-    input[type="file"]{
-      padding:10px;
-      font-size:15px;
-      border:1px solid #ccc;
-      border-radius:8px;
-      outline:none;
-      transition:0.3s;
-      width:100%;
-      box-sizing:border-box;
-    }
-    input[type="text"]:focus{border-color:#4a90e2;box-shadow:0 0 3px #4a90e2;}
+input[type="text"],
+input[type="file"] {
+  padding: 10px;
+  font-size: 15px;
+  border: 1px solid #64748b;
+  border-radius: 8px;
+  outline: none;
+  transition: 0.3s;
+  background: #1e293b;
+  color: #f8fafc;
+  width: 100%;
+  box-sizing: border-box;
+}
+input[type="text"]:focus {
+  border-color: #3b82f6;
+  box-shadow: 0 0 4px #3b82f6;
+}
 
-    button{
-      padding:10px;
-      font-size:16px;
-      background:#4a90e2;
-      color:#fff;
-      border:none;
-      border-radius:8px;
-      cursor:pointer;
-      transition:background 0.3s;
-      width:100%;
-      box-sizing:border-box;
-    }
-    button:hover{background:#357abd;}
+button {
+  padding: 10px;
+  font-size: 16px;
+  background: #3b82f6;
+  color: #fff;
+  border: none;
+  border-radius: 8px;
+  cursor: pointer;
+  transition: background 0.3s;
+  width: 100%;
+  box-sizing: border-box;
+}
+button:hover {
+  background: #2563eb;
+}
 
-    #downloadLink{
-      text-decoration:none;
-      padding:10px;
-      text-align:center;
-      background:#2ecc71;
-      color:#fff;
-      border-radius:8px;
-      display:none; /* shown after generate */
-      margin-top:5px;
-      width:100%;
-      box-sizing:border-box;
-    }
+#downloadLink {
+  text-decoration: none;
+  padding: 10px;
+  text-align: center;
+  background: #10b981;
+  color: #fff;
+  border-radius: 8px;
+  display: none;
+  margin-top: 5px;
+  width: 100%;
+  box-sizing: border-box;
+}
 
-    /* Crop area --------------------------------------------------------- */
-    #crop-area{
-      width:100%;
-      height:auto;
-      border:2px dashed #aaa;
-      padding:5px;
-      border-radius:10px;
-      background-color:#f9f9f9;
-      text-align:center;
-    }
-    #cropImage{max-width:100%;display:none;margin-top:10px;border-radius:5px;max-height:300px;object-fit:contain;}
+/* Crop area --------------------------------------------------------- */
+#crop-area {
+  width: 100%;
+  height: auto;
+  border: 2px dashed #94a3b8;
+  padding: 5px;
+  border-radius: 10px;
+  background-color: #334155;
+  text-align: center;
+}
+#cropImage {
+  max-width: 100%;
+  display: none;
+  margin-top: 10px;
+  border-radius: 5px;
+  max-height: 300px;
+  object-fit: contain;
+}
 
-    /* Generated preview image ------------------------------------------ */
-    .generated-wrapper{
-      width:90vw;
-      max-width:var(--card-w);
-      aspect-ratio:690/1050; /* maintain card ratio responsively */
-      position:relative;
-    }
-    /*
-    #generatedPreview{
-      position:absolute;top:0;left:0;width:100%;height:100%;object-fit:contain;
-      border:4px solid #0077ff;border-radius:12px;box-shadow:0 8px 20px rgba(0,0,0,0.2);
-      background:#eee;
-    }*/
+/* Generated preview image ------------------------------------------ */
+.generated-wrapper {
+  width: 90vw;
+  max-width: var(--card-w);
+  aspect-ratio: 690/1050;
+  position: relative;
+}
 
-    #generatedPreview {
+#generatedPreview {
   position: absolute;
   top: 0;
   left: 0;
   width: 100%;
   height: 100%;
   object-fit: contain;
-  border: 4px solid #0077ff;
+  border: 4px solid #3b82f6;
   border-radius: 12px;
-  box-shadow: 0 8px 20px rgba(0, 0, 0, 0.2);
-
-  /* ✅ Replace this line:
-  background: #eee;
-  */
-
-  /* ✅ Add this instead: */
-  background: url('Background.png') center center no-repeat;
+  box-shadow: 0 8px 20px rgba(0, 0, 0, 0.3);
+  background: url('preview.jpg') center center no-repeat;
   background-size: cover;
 }
 
+/* Small helper text */
+.helper-note {
+  font-size: 12px;
+  color: #cbd5e1;
+  margin-top: -4px;
+}
 
-    /* Small helper text */
-    .helper-note{font-size:12px;color:#666;margin-top:-4px;}
-     
-    #fullscreenLoader {
+#fullscreenLoader {
   position: fixed;
   top: 0;
   left: 0;
   width: 100%;
   height: 100%;
-  background: rgba(0,0,0,0.6); /* dull overlay */
-  display: none; /* show only when needed */
+  background: rgba(15, 23, 42, 0.8);
+  display: none;
   z-index: 9999;
   justify-content: center;
   align-items: center;
@@ -153,7 +158,7 @@
 
 #fullscreenLoader .loader-content {
   text-align: center;
-  color: white;
+  color: #f1f5f9;
 }
 
 #fullscreenLoader img {
@@ -161,11 +166,8 @@
   height: auto;
   margin-bottom: 10px;
 }
+</style>
 
-
-
-
-  </style>
 </head>
 <body>
   <div class="form-container">
@@ -184,7 +186,7 @@
     <a id="downloadLink" download="idcard.png">Download ID Card</a>
     <div id="loading" style="display:none; text-align:center;">
     <img src="https://i.postimg.cc/XNtP5hP3/mg-logo.gif" alt="Loading..." width="500" />
-  <p style="font-size:14px; color:#555;">Uploading, please wait...</p>
+  <p style="font-size:14px; color:#ffffff;">Uploading, please wait...</p>
 </div>
 
   </div>
@@ -195,10 +197,12 @@
   </div>
 </div>
 
+<div id="previewArea">
   <!-- Responsive display of the generated (final) card -->
   <div class="generated-wrapper">
-    <img id="generatedPreview" alt="Your Preview is Here" />
+    <img id="generatedPreview" alt="" />
   </div>
+</div>
 
   <!-- Offscreen canvas used for rendering the TRUE card at native resolution -->
   <canvas id="finalCanvas" width="690" height="1050" style="display:none;"></canvas>
@@ -282,22 +286,33 @@
       };
     });
 
-    function cropAndStorePhoto(){
-      if(!cropper){
-        alert('Please choose and crop a photo first.');
-        return;
-      }
-      const canvas = cropper.getCroppedCanvas({width:coords.photo.w, height:coords.photo.h});
-      const dataURL = canvas.toDataURL('image/png');
-      // create reusable <img> for drawing to final canvas later
-      croppedPhotoImg = new Image();
-      croppedPhotoImg.src = dataURL;
-      document.getElementById('generateBtn').style.display = 'block';
-      croppedPhotoImg.onload = ()=>{
-        // optional immediate regenerate preview after crop
-        generateID(true); // silent = true so we don't block if fields empty
-      };
+    function cropAndStorePhoto() {
+  if (!cropper) {
+    alert('Please choose and crop a photo first.');
+    return;
+  }
+
+  const canvas = cropper.getCroppedCanvas({
+    width: coords.photo.w,
+    height: coords.photo.h
+  });
+
+  const dataURL = canvas.toDataURL('image/png');
+  croppedPhotoImg = new Image();
+  croppedPhotoImg.src = dataURL;
+  document.getElementById('generateBtn').style.display = 'block';
+
+  croppedPhotoImg.onload = () => {
+    generateID(true);
+
+    // 👇 Scroll to preview area smoothly
+    const preview = document.getElementById('previewArea');
+    if (preview) {
+      preview.scrollIntoView({ behavior: 'smooth', block: 'start' });
     }
+  };
+}
+
 
     /**********************************************************************
      * Text drawing helpers
