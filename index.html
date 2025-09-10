@@ -1,6 +1,7 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
+      
   <meta charset="utf-8" />
    <title>Mehar Gayatri Digitals</title>
   <link rel="icon" href="logo.png" type="image/png">
@@ -167,14 +168,15 @@ button:hover {
   margin-bottom: 10px;
 }
 </style>
-
 </head>
 <body>
+  
   <div class="form-container">
-    <h2>Student Details</h2>
+
+    <h2>Student Details(Mogalikuduru)</h2>
     <input type="text" placeholder="Admission No" id="inputAdmn" />
     <input type="text" placeholder="PEN No" id="inputPEN" />
-    <input type="text" placeholder="Child ID" id="inputChild" />
+    <input type="text" placeholder="Aadhar No" id="inputChild" />
     <input type="text" placeholder="Father's Name" id="inputFather" />
     <input type="text" placeholder="Cell No" id="inputCell" />
     <input type="text" placeholder="Student Name" id="inputName" />
@@ -217,13 +219,13 @@ button:hover {
     const CARD_H = 1050;   // template native height
 
    const coords = {
-  photo:  {x:203, y:310, w:271, h:341},
-  admn:   {x:195, y:265, color:'rgb(107,11,67)', size:40, align:'left', weight: 'bold'},
-  pen:    {x:315, y:713, color:'#000', size:28, align:'left', weight: '600'},
-  child:  {x:315, y:753, color:'#000', size:28, align:'left', weight: 'bold'},
-  father: {x:360, y:935, color:'#fff', size:28, align:'left', weight: '700'},
-  cell:   {x:360, y:975, color:'#fff', size:28, align:'left', weight: 'bold'},
-  name:   {x:CARD_W/2, y:672, color:'red', size:30, align:'center', maxWidth:600, weight: 'bold'}
+  photo:  {x:203, y:311, w:271, h:341},
+  admn:   {x:208, y:270, color:'rgb(107,11,67)', size:35, align:'left', weight: 'bold'},
+  pen:    {x:313, y:708, color:'#000', size:28, align:'left', weight: '600'},
+  child:  {x:280, y:894, color:'#fff', size:28, align:'left', weight: 'bold'},
+  father: {x:280, y:928, color:'#fff', size:28, align:'left', weight: '700'},
+  cell:   {x:280, y:968, color:'#fff', size:28, align:'left', weight: 'bold'},
+  name:   {x:CARD_W/2, y:670, color:'red', size:30, align:'center', maxWidth:600, weight: 'bold'}
 };
 
 
@@ -258,7 +260,7 @@ button:hover {
         const img = new Image();
         img.onload = ()=>resolve(img);
         img.onerror = reject;
-        img.src = 'idcard-template1.png'; // make sure file is in same folder
+        img.src = 'Background.png'; // make sure file is in same folder
       });
     }
 
