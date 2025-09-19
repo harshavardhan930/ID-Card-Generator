@@ -1,0 +1,441 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+      
+  <meta charset="utf-8" />
+   <title>Mehar Gayatri Digitals</title>
+  <link rel="icon" href="logo.png" type="image/png">
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+
+  <!-- CropperJS (for photo crop) -->
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/cropperjs/1.5.13/cropper.min.css" />
+  <style>
+:root {
+  --card-w: 690px;
+  --card-h: 1050px;
+}
+
+/* Page layout ------------------------------------------------------- */
+body {
+  font-family: 'Segoe UI', sans-serif;
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: center;
+  gap: 30px;
+  padding: 20px;
+  background: linear-gradient(135deg, #1e293b, #475569); /* Professional cool-tone gradient */
+  color: #f1f5f9;
+  min-height: 100vh;
+  box-sizing: border-box;
+}
+
+.form-container {
+  background: #0f172a; /* Deep navy */
+  padding: 25px;
+  border-radius: 12px;
+  box-shadow: 0 8px 16px rgba(0,0,0,0.2);
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+  width: var(--card-w);
+  box-sizing: border-box;
+}
+
+.form-container h2 {
+  margin-bottom: 10px;
+  color: #e2e8f0;
+  font-size: 22px;
+  border-bottom: 2px solid #3b82f6;
+  padding-bottom: 5px;
+}
+
+input[type="text"],
+input[type="file"] {
+  padding: 10px;
+  font-size: 15px;
+  border: 1px solid #64748b;
+  border-radius: 8px;
+  outline: none;
+  transition: 0.3s;
+  background: #1e293b;
+  color: #f8fafc;
+  width: 100%;
+  box-sizing: border-box;
+}
+input[type="text"]:focus {
+  border-color: #3b82f6;
+  box-shadow: 0 0 4px #3b82f6;
+}
+
+button {
+  padding: 10px;
+  font-size: 16px;
+  background: #3b82f6;
+  color: #fff;
+  border: none;
+  border-radius: 8px;
+  cursor: pointer;
+  transition: background 0.3s;
+  width: 100%;
+  box-sizing: border-box;
+}
+button:hover {
+  background: #2563eb;
+}
+
+#downloadLink {
+  text-decoration: none;
+  padding: 10px;
+  text-align: center;
+  background: #10b981;
+  color: #fff;
+  border-radius: 8px;
+  display: none;
+  margin-top: 5px;
+  width: 100%;
+  box-sizing: border-box;
+}
+
+/* Crop area --------------------------------------------------------- */
+#crop-area {
+  width: 100%;
+  height: auto;
+  border: 2px dashed #94a3b8;
+  padding: 5px;
+  border-radius: 10px;
+  background-color: #334155;
+  text-align: center;
+}
+#cropImage {
+  max-width: 100%;
+  display: none;
+  margin-top: 10px;
+  border-radius: 5px;
+  max-height: 300px;
+  object-fit: contain;
+}
+
+/* Generated preview image ------------------------------------------ */
+.generated-wrapper {
+  width: 90vw;
+  max-width: var(--card-w);
+  aspect-ratio: 690/1050;
+  position: relative;
+}
+
+#generatedPreview {
+  position: absolute;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  object-fit: contain;
+  border: 4px solid #3b82f6;
+  border-radius: 12px;
+  box-shadow: 0 8px 20px rgba(0, 0, 0, 0.3);
+  background: url('preview.jpg') center center no-repeat;
+  background-size: cover;
+}
+
+/* Small helper text */
+.helper-note {
+  font-size: 12px;
+  color: #cbd5e1;
+  margin-top: -4px;
+}
+
+#fullscreenLoader {
+  position: fixed;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  background: rgba(15, 23, 42, 0.8);
+  display: none;
+  z-index: 9999;
+  justify-content: center;
+  align-items: center;
+}
+
+#fullscreenLoader .loader-content {
+  text-align: center;
+  color: #f1f5f9;
+}
+
+#fullscreenLoader img {
+  width: 100px;
+  height: auto;
+  margin-bottom: 10px;
+}
+</style>
+</head>
+<body>
+  
+  <div class="form-container">
+
+    <h2>Student Details(Mogalikuduru)</h2>
+    <input type="text" placeholder="Admission No" id="inputAdmn" />
+    <input type="text" placeholder="PEN No" id="inputPEN" />
+    <input type="text" placeholder="Aadhar No" id="inputChild" />
+    <input type="text" placeholder="Father's Name" id="inputFather" />
+    <input type="text" placeholder="Cell No" id="inputCell" />
+    <input type="text" placeholder="Student Name" id="inputName" />
+    <input type="file" id="photoInput" accept="image/*" />
+    <div id="crop-area"><img id="cropImage" alt="Crop source" /></div>
+    <div class="helper-note">Select a photo, crop, then generate.</div>
+    <button type="button" onclick="cropAndStorePhoto()">Preview ID Card</button>
+    <button type="button" id="generateBtn" onclick="generateID()" style="display:none;">Uplode ID Card</button>
+    <a id="downloadLink" download="idcard.png">Download ID Card</a>
+    <div id="loading" style="display:none; text-align:center;">
+    <img src="https://i.postimg.cc/XNtP5hP3/mg-logo.gif" alt="Loading..." width="500" />
+  <p style="font-size:14px; color:#ffffff;">Uploading, please wait...</p>
+</div>
+
+  </div>
+  <div id="fullscreenLoader">
+  <div class="loader-content">
+    <img src="loading animation.gif" alt="Loading..." />
+    <p>Uploading, please wait...</p>
+  </div>
+</div>
+
+<div id="previewArea">
+  <!-- Responsive display of the generated (final) card -->
+  <div class="generated-wrapper">
+    <img id="generatedPreview" alt="" />
+  </div>
+</div>
+
+  <!-- Offscreen canvas used for rendering the TRUE card at native resolution -->
+  <canvas id="finalCanvas" width="690" height="1050" style="display:none;"></canvas>
+
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/cropperjs/1.5.13/cropper.min.js"></script>
+  <script>
+    /**********************************************************************
+     * CONFIGURATION: Card size & drawing coordinates (pixels)
+     * Update these values to reposition content on the template.
+     **********************************************************************/
+    const CARD_W = 690;   // template native width
+    const CARD_H = 1050;   // template native height
+
+   const coords = {
+  photo:  {x:203, y:311, w:271, h:341},
+  admn:   {x:208, y:270, color:'rgb(107,11,67)', size:35, align:'left', weight: 'bold'},
+  pen:    {x:313, y:708, color:'#000', size:28, align:'left', weight: '600'},
+  child:  {x:280, y:894, color:'#fff', size:28, align:'left', weight: 'bold'},
+  father: {x:280, y:928, color:'#fff', size:28, align:'left', weight: '700'},
+  cell:   {x:280, y:968, color:'#fff', size:28, align:'left', weight: 'bold'},
+  name:   {x:CARD_W/2, y:670, color:'red', size:30, align:'center', maxWidth:600, weight: 'bold'}
+};
+
+
+
+    /**********************************************************************
+     * DOM refs
+     **********************************************************************/
+    const inpAdmn   = document.getElementById('inputAdmn');
+    const inpPEN    = document.getElementById('inputPEN');
+    const inpChild  = document.getElementById('inputChild');
+    const inpFather = document.getElementById('inputFather');
+    const inpCell   = document.getElementById('inputCell');
+    const inpName   = document.getElementById('inputName');
+
+    const photoInput    = document.getElementById('photoInput');
+    const cropImage     = document.getElementById('cropImage');
+    const generatedPreview = document.getElementById('generatedPreview');
+    const downloadLink  = document.getElementById('downloadLink');
+
+    const finalCanvas = document.getElementById('finalCanvas');
+    const ctx = finalCanvas.getContext('2d');
+
+    let cropper = null;
+    let croppedPhotoImg = null;  // Image element built from cropped data
+    let templateImg = null;      // Background template image
+
+    /**********************************************************************
+     * Load template background once
+     **********************************************************************/
+    function loadTemplate(){
+      return new Promise((resolve, reject)=>{
+        const img = new Image();
+        img.onload = ()=>resolve(img);
+        img.onerror = reject;
+        img.src = 'Background.png'; // make sure file is in same folder
+      });
+    }
+
+    loadTemplate().then(img=>{templateImg = img;}).catch(err=>{
+      alert('Template image failed to load. Check path.');
+      console.error(err);
+    });
+
+    /**********************************************************************
+     * Photo selection & cropping
+     **********************************************************************/
+    photoInput.addEventListener('change', function(){
+      const file = this.files[0];
+      if(!file) return;
+      const url = URL.createObjectURL(file);
+      cropImage.src = url;
+      cropImage.style.display = 'block';
+      cropImage.onload = ()=>{
+        if(cropper) cropper.destroy();
+        cropper = new Cropper(cropImage, {
+          aspectRatio: 13/16,
+          viewMode: 1,
+          autoCropArea: 1,
+        });
+      };
+    });
+
+    function cropAndStorePhoto() {
+  if (!cropper) {
+    alert('Please choose and crop a photo first.');
+    return;
+  }
+
+  const canvas = cropper.getCroppedCanvas({
+    width: coords.photo.w,
+    height: coords.photo.h
+  });
+
+  const dataURL = canvas.toDataURL('image/png');
+  croppedPhotoImg = new Image();
+  croppedPhotoImg.src = dataURL;
+  document.getElementById('generateBtn').style.display = 'block';
+
+  croppedPhotoImg.onload = () => {
+    generateID(true);
+
+    // 👇 Scroll to preview area smoothly
+    const preview = document.getElementById('previewArea');
+    if (preview) {
+      preview.scrollIntoView({ behavior: 'smooth', block: 'start' });
+    }
+  };
+}
+
+
+    /**********************************************************************
+     * Text drawing helpers
+     **********************************************************************/
+function drawTextFit(ctx, text, x, y, pxSize, color, align='left', maxWidth=null, weight='normal'){
+  ctx.textBaseline = 'top';
+  ctx.fillStyle = color;
+  ctx.textAlign = align;
+  let size = pxSize;
+  ctx.font = `${weight} ${size}px 'Arial', sans-serif`;
+  if(maxWidth){
+    while(size > 8 && ctx.measureText(text).width > maxWidth){
+      size -= 1;
+      ctx.font = `${weight} ${size}px 'Arial', sans-serif`;
+    }
+  }
+  ctx.fillText(text, x, y);
+}
+
+
+    /**********************************************************************
+     * Generate final card image (true pixel-perfect)
+     * silent=true skips required-field alerts (for auto-preview after crop)
+     **********************************************************************/
+    function generateID(silent=false){
+      if(!templateImg){
+        alert('Template not loaded yet. Please wait a moment and try again.');
+        return;
+      }
+      const required = [inpAdmn,inpPEN,inpChild,inpFather,inpCell,inpName];
+      const missing = required.filter(i=>i.value.trim()==="");
+      if(!silent && missing.length){
+        alert('Please fill in all the fields before generating.');
+        return;
+      }
+      if(!croppedPhotoImg){
+        if(!silent) alert('Please crop a photo first.');
+        return;
+      }
+
+      // Clear canvas
+      ctx.clearRect(0,0,CARD_W,CARD_H);
+
+      // Draw background template
+      ctx.drawImage(templateImg, 0,0, CARD_W, CARD_H);
+
+      // Draw cropped photo
+      const p = coords.photo;
+      ctx.drawImage(croppedPhotoImg, p.x, p.y, p.w, p.h);
+      ctx.lineWidth = 2; ctx.strokeStyle = '#000'; ctx.strokeRect(p.x, p.y, p.w, p.h);
+
+      // Draw text fields
+      drawTextFit(ctx, inpAdmn.value,  coords.admn.x,  coords.admn.y,  coords.admn.size,  coords.admn.color,  coords.admn.align, null, coords.admn.weight);
+drawTextFit(ctx, inpPEN.value,   coords.pen.x,   coords.pen.y,   coords.pen.size,   coords.pen.color,   coords.pen.align, null, coords.pen.weight);
+drawTextFit(ctx, inpChild.value, coords.child.x, coords.child.y, coords.child.size, coords.child.color, coords.child.align, null, coords.child.weight);
+drawTextFit(ctx, inpFather.value,coords.father.x,coords.father.y,coords.father.size,coords.father.color,coords.father.align, null, coords.father.weight);
+drawTextFit(ctx, inpCell.value,  coords.cell.x,  coords.cell.y,  coords.cell.size,  coords.cell.color,  coords.cell.align, null, coords.cell.weight);
+drawTextFit(ctx, inpName.value,  coords.name.x,  coords.name.y,  coords.name.size,  coords.name.color,  coords.name.align, coords.name.maxWidth, coords.name.weight);
+
+      // Update preview <img>
+      const dataURL = finalCanvas.toDataURL('image/png');
+      generatedPreview.src = dataURL;
+
+      // Prep download link
+      const safeAdmn = (inpAdmn.value || 'student').replace(/[^a-zA-Z0-9_-]/g,'_');
+      
+
+      if(!silent){
+  document.getElementById('fullscreenLoader').style.display = 'flex';
+  uploadToDrive(dataURL, safeAdmn);
+}
+
+    }
+    
+
+    /**********************************************************************
+     * Upload final card & raw photo to Google Apps Script
+     **********************************************************************/
+function uploadToDrive(dataURL, safeAdmn) {
+  document.getElementById('fullscreenLoader').style.display = 'flex';
+
+  const base64Image = dataURL.split(',')[1];
+  const rawPhotoData = croppedPhotoImg.src.split(',')[1];
+
+  const scriptURL = 'https://script.google.com/macros/s/AKfycbynSDk3D4sNMqlfO-hmnkyPfJfs5hMMKJexhsQWvUFRR-kL99fUQTqt0MOZLK-jTkom/exec'; // Replace with your deployed Web App URL
+
+  const formData = new FormData();
+  formData.append('image', base64Image);
+  formData.append('filename', `Student_ID_${safeAdmn}.png`);
+
+  formData.append('photo', rawPhotoData);
+  formData.append('photoName', `Passport_Photo_${safeAdmn}.png`);
+
+  formData.append('admn', inpAdmn.value.trim());
+  formData.append('name', inpName.value.trim());
+  formData.append('pen', inpPEN.value.trim());
+  formData.append('child', inpChild.value.trim());
+  formData.append('father', inpFather.value.trim());
+  formData.append('cell', inpCell.value.trim());
+
+  fetch(scriptURL, { method: 'POST', body: formData })
+    .then(r => r.text())
+    .then(txt => {
+      document.getElementById('fullscreenLoader').style.display = 'none';
+
+      if (txt === "exists") {
+        alert('⚠️ This admission number already exists.\nUpload skipped.');
+        return;
+      }
+
+      alert('✅ Upload complete!\n' + txt);
+      location.reload();
+    })
+    .catch(err => {
+      document.getElementById('fullscreenLoader').style.display = 'none';
+      console.error('Upload error:', err);
+      alert('❌ Upload failed. Please try again.');
+    });
+}
+
+
+  </script>
+</body>
+</html>
