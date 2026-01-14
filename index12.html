@@ -44,18 +44,29 @@ button{
   cursor:pointer;
 }
 button:hover{background:#1d4ed8;}
+
+@media (min-width: 900px){
+  .generated-wrapper{
+    flex-direction: row;
+  }
+}
 .generated-wrapper{
-  display:flex;
-  gap:20px;
+  display: flex;
+  flex-direction: column;   /* UP & DOWN by default */
+  gap: 20px;
+  width: 100%;
+  align-items: center;
 }
+
 .generated-wrapper img{
-  width: 90vw;
+  width: 100%;
   max-width: var(--card-w);
-  aspect-ratio: 1050/690;
-  position: relative;
-  border:3px solid #2563eb;
-  border-radius:8px;
+  height: auto;
+  aspect-ratio: 1050 / 690;
+  border: 3px solid #2563eb;
+  border-radius: 8px;
 }
+
 #crop-area{
   border:2px dashed #64748b;
   padding:5px;
