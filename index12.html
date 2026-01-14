@@ -1,0 +1,336 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8" />
+<title>ID Card Generator</title>
+<meta name="viewport" content="width=device-width, initial-scale=1" />
+
+<link rel="stylesheet"
+ href="https://cdnjs.cloudflare.com/ajax/libs/cropperjs/1.5.13/cropper.min.css"/>
+
+<style>
+:root{
+  --card-w:1050px;
+  --card-h:690px;
+
+}
+body{
+  font-family:Segoe UI,sans-serif;
+  background:#0f172a;
+  color:#fff;
+  padding:20px;
+  display:flex;
+  flex-wrap:wrap;
+  gap:30px;
+  justify-content:center;
+}
+.form-container{
+  width:1050px;
+  background:#020617;
+  padding:20px;
+  border-radius:10px;
+}
+input,button{
+  width:100%;
+  padding:10px;
+  margin-bottom:10px;
+  border-radius:6px;
+  border:1px solid #475569;
+  background:#020617;
+  color:#fff;
+}
+button{
+  background:#2563eb;
+  cursor:pointer;
+}
+button:hover{background:#1d4ed8;}
+.generated-wrapper{
+  display:flex;
+  gap:20px;
+}
+.generated-wrapper img{
+  width: 90vw;
+  max-width: var(--card-w);
+  aspect-ratio: 1050/690;
+  position: relative;
+  border:3px solid #2563eb;
+  border-radius:8px;
+}
+#crop-area{
+  border:2px dashed #64748b;
+  padding:5px;
+}
+
+
+/* ===== Fullscreen Loader ===== */
+#fullscreenLoader{
+  position: fixed;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  background: rgba(15, 23, 42, 0.8);
+  display: none;
+  z-index: 9999;
+  justify-content: center;
+  align-items: center;
+}
+
+.loader-box{
+  text-align: center;
+  color: #f1f5f9;
+}
+
+.loader-box{
+  text-align: center;
+  padding: 30px 40px;
+  border-radius: 12px;
+
+}
+
+
+.loader-box p{
+  font-size: 18px;
+  color: #e5e7eb;
+  font-weight: 600;
+}
+
+</style>
+</head>
+
+<body>
+
+<!-- ================= FORM ================= -->
+<div class="form-container">
+
+<h2>Front Card Details</h2>
+<input id="inputAdmn" placeholder="CFMS No">
+<input id="inputName" placeholder="Name">
+<input id="inputPEN" placeholder="Designation">
+<input id="inputChild" placeholder="Date of Birth">
+<input id="inputFather" placeholder="Husband's Name">
+<input id="inputCell" placeholder="Place of Working">
+
+<h2>Back Card Details</h2>
+<input id="inputAddress" placeholder="Address">
+<input id="inputTreasury" placeholder="Treasury ID No">
+<input id="inputAadhaar" placeholder="Aadhaar No">
+<input id="inputContact" placeholder="Contact No">
+
+<input type="file" id="photoInput" accept="image/*">
+
+<div id="crop-area">
+  <img id="cropImage" style="max-width:100%;display:none;">
+</div>
+
+<button onclick="cropAndStorePhoto()">Preview ID Card</button>
+<button onclick="generateID()">Upload ID Card</button>
+
+</div>
+
+<!-- ================= PREVIEW ================= -->
+<div class="generated-wrapper">
+  <img id="generatedPreview">
+  <img id="generatedPreviewBack">
+</div>
+
+<canvas id="finalCanvas" width="1050" height="690" style="display:none"></canvas>
+<canvas id="backCanvas" width="1050" height="690" style="display:none"></canvas>
+
+<script src="https://cdnjs.cloudflare.com/ajax/libs/cropperjs/1.5.13/cropper.min.js"></script>
+
+<script>
+const CARD_W=1050, CARD_H=690;
+
+const coords={
+  photo:{x:71,y:216,w:234,h:289},
+  admn:{x:560,y:292,size:26,color:'#000'},
+  name:{x:560,y:332,size:26,color:'#000'},
+  pen:{x:560,y:372,size:26,color:'#000'},
+  child:{x:560,y:412,size:26,color:'#000'},
+  father:{x:560,y:452,size:26,color:'#000'},
+  cell:{x:560,y:492,size:26,color:'#000'}
+};
+
+const backCoords={
+  address:{x:400   ,y:220,size:26,maxWidth:540},
+  treasury:{x:620,y:422,size:26},
+  aadhaar:{x:620,y:455,size:26},
+  contact:{x:620,y:492,size:26}
+};
+
+const ctx=document.getElementById('finalCanvas').getContext('2d');
+const backCtx=document.getElementById('backCanvas').getContext('2d');
+
+let cropper,croppedPhotoImg,frontTemplate,backTemplate;
+
+const frontImg=new Image();
+frontImg.src='Teacher Front.jpg';
+frontImg.onload=()=>frontTemplate=frontImg;
+
+const backImg=new Image();
+backImg.src='Teacher Back.jpg';
+backImg.onload=()=>backTemplate=backImg;
+
+photoInput.onchange=e=>{
+  cropImage.src=URL.createObjectURL(e.target.files[0]);
+  cropImage.style.display='block';
+  cropImage.onload=()=>{
+    if(cropper)cropper.destroy();
+    cropper=new Cropper(cropImage,{aspectRatio:259/270});
+  };
+};
+
+function cropAndStorePhoto(){
+  const c=cropper.getCroppedCanvas({width:259,height:270});
+  croppedPhotoImg=new Image();
+  croppedPhotoImg.src=c.toDataURL();
+  croppedPhotoImg.onload=()=>generateID(true);
+}
+
+function drawText(ctx,text,x,y,size,color,align='left',maxWidth=null){
+  ctx.fillStyle=color;
+  ctx.textAlign=align;
+  ctx.font=`bold ${size}px Arial`;
+  if(maxWidth){
+    while(ctx.measureText(text).width>maxWidth && size>10){
+      size--; ctx.font=`bold ${size}px Arial`;
+    }
+  }
+  ctx.fillText(text,x,y);
+}
+
+function drawMultilineText(ctx, text, x, y, maxWidth, lineHeight, fontSize, color) {
+  ctx.fillStyle = color;
+  ctx.textAlign = 'left';
+  ctx.font = `bold ${fontSize}px Arial`;
+
+  const words = text.split(' ');
+  let line = '';
+  let currentY = y;
+
+  for (let i = 0; i < words.length; i++) {
+    const testLine = line + words[i] + ' ';
+    const metrics = ctx.measureText(testLine);
+
+    if (metrics.width > maxWidth && i > 0) {
+      ctx.fillText(line, x, currentY);
+      line = words[i] + ' ';
+      currentY += lineHeight;
+    } else {
+      line = testLine;
+    }
+  }
+  ctx.fillText(line, x, currentY);
+}
+
+
+
+function generateID(preview=false){
+  ctx.clearRect(0,0,CARD_W,CARD_H);
+  ctx.drawImage(frontTemplate,0,0,CARD_W,CARD_H);
+  ctx.drawImage(croppedPhotoImg,coords.photo.x,coords.photo.y,coords.photo.w,coords.photo.h);
+
+  drawText(ctx,inputAdmn.value,coords.admn.x,coords.admn.y,coords.admn.size,coords.admn.color);
+  drawText(ctx,inputName.value,coords.name.x,coords.name.y,coords.name.size,coords.name.color,coords.name.align,coords.name.maxWidth);
+  drawText(ctx,inputPEN.value,coords.pen.x,coords.pen.y,coords.pen.size,coords.pen.color);
+  drawText(ctx,inputChild.value,coords.child.x,coords.child.y,coords.child.size,coords.child.color);
+  drawText(ctx,inputFather.value,coords.father.x,coords.father.y,coords.father.size,coords.father.color);
+  drawText(ctx,inputCell.value,coords.cell.x,coords.cell.y,coords.cell.size,coords.cell.color);
+
+  generatedPreview.src=finalCanvas.toDataURL();
+
+  // BACK
+  backCtx.clearRect(0,0,CARD_W,CARD_H);
+  backCtx.drawImage(backTemplate,0,0,CARD_W,CARD_H);
+
+  //drawText(backCtx,inputAddress.value,backCoords.address.x,backCoords.address.y,backCoords.address.size,'#000','left',backCoords.address.maxWidth);
+  drawMultilineText(
+  backCtx,
+  inputAddress.value,
+  backCoords.address.x,
+  backCoords.address.y,
+  backCoords.address.maxWidth, // width of address block
+  34,                          // line spacing
+  backCoords.address.size,     // font size
+  '#000'
+);
+
+  drawText(backCtx,inputTreasury.value,backCoords.treasury.x,backCoords.treasury.y,backCoords.treasury.size,'#000');
+  drawText(backCtx,inputAadhaar.value,backCoords.aadhaar.x,backCoords.aadhaar.y,backCoords.aadhaar.size,'#000');
+  drawText(backCtx,inputContact.value,backCoords.contact.x,backCoords.contact.y,backCoords.contact.size,'#000');
+
+  generatedPreviewBack.src=backCanvas.toDataURL();
+
+  if(!preview) upload();
+}
+
+function upload(){
+  // Show loader if you have one
+  document.getElementById('fullscreenLoader').style.display = 'flex';
+
+  const admn = inputAdmn.value.trim() || "UNKNOWN";
+  const safeAdmn = admn.replace(/[^a-zA-Z0-9_-]/g,'_');
+
+  // Front image
+  const frontDataURL = finalCanvas.toDataURL('image/png');
+  const frontBase64  = frontDataURL.split(',')[1];
+
+  // Back image
+  const backDataURL = backCanvas.toDataURL('image/png');
+  const backBase64  = backDataURL.split(',')[1];
+
+  const scriptURL =
+    "https://script.google.com/macros/s/AKfycbw5ehw8bn1ozKM1pSTZMfjdqgBzwzqVpYwe0a0jj_FqxgMctjb_PYW5DjC_vhw-Q5M6pA/exec";
+
+  const formData = new FormData();
+
+  // 🔹 FRONT
+  formData.append("frontImage", frontBase64);
+  formData.append("frontName", `${safeAdmn}_FRONT.png`);
+
+  // 🔹 BACK
+  formData.append("backImage", backBase64);
+  formData.append("backName", `${safeAdmn}_BACK.png`);
+
+  // Optional metadata
+  formData.append("admn", admn);
+  formData.append("name", inputName.value.trim());
+  formData.append("pen", inputPEN.value.trim());
+  formData.append("child", inputChild.value.trim());      // DOB
+  formData.append("father", inputFather.value.trim());
+  formData.append("cell", inputCell.value.trim());
+  formData.append("address", inputAddress.value.trim());
+  formData.append("aadhaar", inputAadhaar.value.trim());
+  formData.append("contact", inputContact.value.trim());
+  formData.append("treasury", inputTreasury.value.trim());
+
+  fetch(scriptURL, {
+    method: "POST",
+    body: formData
+  })
+  .then(res => res.text())
+  .then(txt => {
+    // document.getElementById('fullscreenLoader').style.display = 'none';
+    alert("✅ Front & Back uploaded successfully\n" + txt);
+    location.reload();
+  })
+  .catch(err => {
+    // document.getElementById('fullscreenLoader').style.display = 'none';
+    console.error(err);
+    alert("❌ Upload failed");
+  });
+}
+
+
+</script>
+<!-- ===== FULLSCREEN UPLOADER ===== -->
+<div id="fullscreenLoader">
+  <div class="loader-box">
+    <img src="loading animation.gif" alt="Logo">
+    <p>Uploading… Please wait</p>
+  </div>
+</div>
+
+</body>
+</html>
